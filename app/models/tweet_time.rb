@@ -1,0 +1,2 @@
+class TweetTime < ApplicationRecord
+end

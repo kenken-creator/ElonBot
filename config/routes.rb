@@ -1,3 +1,3 @@
 Rails.application.routes.draw do
-  root 'twitter#single_tweet'
+  root 'twitter#stream_text'
 end

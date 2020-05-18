@@ -1,7 +1,5 @@
 class TwitterController < ApplicationController
 
-  # before_action :set_rest_client
-
   def update
     set_rest_client
     @restClient.update("test mk.2")
@@ -13,32 +11,66 @@ class TwitterController < ApplicationController
     render plain: "#{user_name}"
   end
 
+
+
   def stream_text
     rest_client = set_rest_client
-    @user_timeline = rest_client.user_timeline("elonmusk").take(20)
+    @user_timeline = rest_client.user_timeline("NiallOfficial").take(20).reverse
+    index = 0
+    last_data_time = TweetTime.last.tweet_created_at
+    last_tweet_time = @user_timeline.last.created_at
     @user_timeline.each do |tweet|
-      if tweet.text.start_with?("RT")
-        rest_client.update("#{tweet.retweeted_status.text} twitter.com/#{tweet.retweeted_status.user.screen_name}/status/#{tweet.retweeted_status.id}")
-      elsif tweet.quote?
-        rest_client.update("#{tweet.text}")
-      elsif tweet.text.start_with?("@")
-        rest_client.update("#{tweet.text.gsub(/@[a-z|A-Z|0-9|_]+/, "")} twitter.com/#{tweet.in_reply_to_screen_name}/status/#{tweet.in_reply_to_status_id}")
-      else rest_client.update("#{tweet.text} twitter.com/#{tweet.user.screen_name}/status/#{tweet.id}")
+      text_without_auto_url = tweet.text.gsub(/http(s|):[\/\w\-\_\.\!\*\'\)\(]+/, "")
+      if last_data_time < tweet.created_at
+        unless tweet.reply?
+          if tweet.retweet?
+              rest_client.update("#{tweet.retweeted_status.text.gsub(/http(s|):[\/\w\-\_\.\!\*\'\)\(]+/, "")} RT from #{tweet.user.name} twitter.com/#{tweet.retweeted_status.user.screen_name}/status/#{tweet.retweeted_status.id}")
+
+          elsif tweet.truncated?
+            if tweet.quote?
+              rest_client.update("#{text_without_auto_url} #{tweet.url}")
+            else
+              rest_client.update("#{text_without_auto_url} #{tweet.url}")
+            end
+            
+          else
+            if tweet.quote?
+              rest_client.update("#{tweet.text}")
+            else
+              rest_client.update("#{tweet.text} #{tweet.url}")
+            end
+          end
+        end
       end
+      index += 1
     end
+    if last_data_time < last_tweet_time
+      TweetTime.create(tweet_created_at: last_tweet_time)
+    end
+    render plain: index
   end
+
+
+
 
   def single_tweet
-    #引用リツイートに関して末尾が丸まった場合https消したいけど、写真・動画もhttpsだからどうしようか。あ、末尾丸まったらリツイートを埋め込めばいいだけだから気にしなくていいかも
-    tweet = set_rest_client.status(1261646331006849024)
-    unless tweet.text.length == 140 or 139
-      set_rest_client.update("#{tweet.text.gsub(/http(s|):[\/\w\-\_\.\!\*\'\)\(]+/, "")} twitter.com/#{tweet.user.screen_name}/status/#{tweet.id}")
-    end
-    render plain: "#{tweet.text}\n#{tweet.text.gsub(/@[a-z|A-Z|0-9|_]+/, "")}"
+    tweet = set_rest_client.status(1261739539384713217)
+    set_rest_client.update("#{tweet.text} #{tweet.url}")
+    TweetTime.create(tweet_created_at: tweet.created_at)
+    render plain: "#{tweet.text}\n#{tweet.url}"
   end
 
+  def check_phenomenon
+    tweet = set_rest_client.user_timeline("joerogan").take(5).reverse
+    if TweetTime.last.tweet_created_at < tweet[3].created_at
+      TweetTime.create(tweet_created_at: tweet.last.created_at)
+    end
+    render plain: "#{TweetTime.last.tweet_created_at < tweet[3].created_at}"
+  end
+  
+
   def check_methods
-    @check = set_rest_client.status(1255918585991454721).text.methods
+    @check = TweetTime.new.create
   end
 
   private
@@ -52,12 +84,4 @@ class TwitterController < ApplicationController
     end
   end
 
-  def set_streaming_client
-    @streamingClient = Twitter::Streaming::Client.new do |config|
-      config.consumer_key        = Rails.application.credentials[:twitter][:API_key]
-      config.consumer_secret     = Rails.application.credentials[:twitter][:API_secret]
-      config.access_token        = Rails.application.credentials[:twitter][:access_token]
-      config.access_token_secret = Rails.application.credentials[:twitter][:access_token_secret]
-    end
-  end
 end
