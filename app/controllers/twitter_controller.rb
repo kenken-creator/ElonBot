@@ -16,7 +16,7 @@ class TwitterController < ApplicationController
   def stream_text
     #set_twitter_api自体がrest_clientを定義してるから,一行目はset_twitter_apiだけでいいかも
     rest_client = set_twitter_api
-    @user_timeline = rest_client.user_timeline("realDonaldTrump").take(20).reverse
+    @user_timeline = rest_client.user_timeline("ladygaga").take(20).reverse
     last_data_time = TweetTime.last.tweet_created_at
     last_tweet_time = @user_timeline.last.created_at
 
