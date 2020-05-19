@@ -1,22 +1,10 @@
 class TwitterController < ApplicationController
 
-  def update
-    set_twitter_api
-    @restClient.update("test mk.2")
-    render plain: "Twitter.update"
-  end
 
-  def get_user
-    user_name = set_twitter_api.user("elonmusk").screen_name
-    render plain: "#{user_name}"
-  end
-
-
-
-  def stream_text
+  def stream_tweets
     #set_twitter_api自体がrest_clientを定義してるから,一行目はset_twitter_apiだけでいいかも
     rest_client = set_twitter_api
-    @user_timeline = rest_client.user_timeline("ladygaga").take(20).reverse
+    @user_timeline = rest_client.user_timeline("realDonaldTrump").take(10).reverse
     last_data_time = TweetTime.last.tweet_created_at
     last_tweet_time = @user_timeline.last.created_at
 
@@ -74,6 +62,8 @@ class TwitterController < ApplicationController
 
 
 
+
+
   def single_tweet
     tweet = set_twitter_api.status(1262407959889338368)
     set_twitter_api.update("#{tweet.text} #{tweet.url}")
@@ -82,20 +72,8 @@ class TwitterController < ApplicationController
   end
 
   def check_phenomenon
-    tweet = set_twitter_api.user_timeline("Elon04297551").take(2).reverse
-    tweet.each do |tweet|
-      text_without_url = tweet.text.gsub(/http(s|):[\/\w\-\_\.\!\*\'\)\(]+/, "")
-      retweet_text_without_url = tweet.retweeted_status.text.gsub(/http(s|):[\/\w\-\_\.\!\*\'\)\(]+/, "") if tweet.retweet?
-      if text_without_url.empty? or retweet_text_without_url.empty?
-        if tweet.retweet?
-          set_twitter_api.update("RT from #{tweet.user.name} #{tweet.retweeted_status.url}")
-        else
-          set_twitter_api.update("#{tweet.url}")
-        end
-        
-      end
-    end
-    render plain: tweet[0].retweeted_status.url
+    tweet = set_twitter_api.home_timeline
+    render plain: tweet.methods
   end
 
   def translate
