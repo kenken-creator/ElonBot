@@ -1,0 +1,4 @@
+%h2 タイムラインの表示
+- @user_timeline.each do |tweet|
+  = "#{tweet.user.name}"
+  %p= tweet.text
