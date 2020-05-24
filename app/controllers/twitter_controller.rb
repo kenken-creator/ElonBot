@@ -22,7 +22,7 @@ class TwitterController < ApplicationController
           
           if tweet.retweet?
             if retweet_text_without_url.empty?
-              rest_client.update("RT by @#{tweet.user.screen_name} #{tweet.retweeted_status.url}")
+              rest_client.update("RT by @#{tweet.user.screen_name}\n#トランプ #{tweet.retweeted_status.url}")
             else
               response = endpoint.post(url,{key: translate_key, name: name, type: 'json', text: retweet_text_without_url})
               result = JSON.parse(response.body)
@@ -59,7 +59,10 @@ class TwitterController < ApplicationController
     render plain: index
   end
 
-
+  def update
+    set_twitter_api.update("#トランプ ＃トランプさん #ドナルドトランプ")
+    render plain: 'a'
+  end
 
 
 
