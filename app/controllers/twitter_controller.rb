@@ -2,9 +2,8 @@ class TwitterController < ApplicationController
 
 
   def stream_tweets
-    #set_twitter_api自体がrest_clientを定義してるから,一行目はset_twitter_apiだけでいいかも
     rest_client = set_twitter_api
-    @user_timeline = rest_client.user_timeline("realDonaldTrump").take(10).reverse
+    @user_timeline = rest_client.search("blacklivesmatter", result_type: :popular, lang: :en).take(10).reverse
     last_data_time = TweetTime.last.tweet_created_at
     last_tweet_time = @user_timeline.last.created_at
 
@@ -22,12 +21,12 @@ class TwitterController < ApplicationController
           
           if tweet.retweet?
             if retweet_text_without_url.empty?
-              rest_client.update("RT by @#{tweet.user.screen_name}\n#トランプ #{tweet.retweeted_status.url}")
+              rest_client.update("RT by @#{tweet.user.screen_name}\n#blacklivesmatter #{tweet.retweeted_status.url}")
             else
               response = endpoint.post(url,{key: translate_key, name: name, type: 'json', text: retweet_text_without_url})
               result = JSON.parse(response.body)
               translated_retweet_text = result['resultset']['result']['text']
-              rest_client.update("#{translated_retweet_text}\nRT by @#{tweet.user.screen_name} #{tweet.retweeted_status.url}")
+              rest_client.update("#{translated_retweet_text}\nRT by @#{tweet.user.screen_name}\n#blacklivesmatter #{tweet.retweeted_status.url}")
             end
 
           else
@@ -39,13 +38,13 @@ class TwitterController < ApplicationController
               translated_text = result['resultset']['result']['text']
               if tweet.quote?
                 if tweet.truncated?
-                  rest_client.update("#{translated_text} #{tweet.url}")
+                  rest_client.update("#{translated_text}\n#blacklivesmatter #{tweet.url}")
                 else
-                  rest_client.update("#{translated_text}\n引用RT by @#{tweet.user.screen_name} #{tweet.quoted_status.url}")
+                  rest_client.update("#{translated_text}\n引用RT by @#{tweet.user.screen_name}\n#blacklivesmatter #{tweet.quoted_status.url}")
                 end
                 
               else
-                  rest_client.update("#{translated_text} #{tweet.url}")
+                  rest_client.update("#{translated_text}\n#blacklivesmatter #{tweet.url}")
               end
             end
           end   
@@ -60,7 +59,7 @@ class TwitterController < ApplicationController
   end
 
   def update
-    set_twitter_api.update("#トランプ ＃トランプさん #ドナルドトランプ")
+    set_twitter_api.update("taskのテストーー")
     render plain: 'a'
   end
 
@@ -75,8 +74,13 @@ class TwitterController < ApplicationController
   end
 
   def check_phenomenon
-    tweet = set_twitter_api.home_timeline
-    render plain: tweet.methods
+    @tweets = set_twitter_api.search("blacklivesmatter", result_type: :popular, max_id: TweetId.last.status_id.to_i - 1, lang: :en).take(5).reverse
+    @array = []
+    @tweets.each do |tweet|
+      @array << tweet.id
+    end
+    @array.sort!
+    TweetId.create(status_id: @array.first)
   end
 
   def translate
@@ -97,7 +101,7 @@ class TwitterController < ApplicationController
   
 
   def check_methods
-    @check = set_twitter_api.status(1262363944338944000)
+    @check = set_twitter_api.status(1264627389599895552).methods
   end
 
   private

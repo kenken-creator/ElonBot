@@ -58,3 +58,5 @@ gem 'twitter'
 gem 'oauth'
 gem 'json'
 gem 'haml-rails'
+
+gem 'whenever', require: false

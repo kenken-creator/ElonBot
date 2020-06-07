@@ -1,0 +1,2 @@
+class TweetId < ApplicationRecord
+end

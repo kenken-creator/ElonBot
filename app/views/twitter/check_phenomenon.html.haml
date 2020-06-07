@@ -1,0 +1,8 @@
+- @tweets.each do |tweet|
+  = tweet.text.gsub(/#blacklivesmatter|#BlackLivesMatter|http(s|):[\/\w\-\_\.\!\*\'\)\(]+/, '')
+  = tweet.id
+  %br
+  = tweet.favorite_count
+  %br
+  %br
+= @array
