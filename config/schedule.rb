@@ -22,6 +22,6 @@
 set :output, "/log/crontab.log"
 set :environment, ENV['RAILS_ENV']
 
-every 1.hour do
-  rake "translate_and_tweet:tweet"
+every 2.hour do
+  rake "translate_and_tweet:blacklivesmatter"
 end
